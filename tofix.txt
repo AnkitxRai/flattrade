@@ -10,3 +10,12 @@
 
 close_all_positions. str get issue done
 cancel_all_pending_mis_orders to fix 
+
+close positions before 3:15 to save auto square off
+end_time = datetime.time(15, 15)  # 3:15 PM
+
+    now = datetime.datetime.now().time()
+    if now >= end_time:
+        close_all_position()
+        print("Ending script as 3:15 PM reached")
+        break

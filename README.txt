@@ -30,3 +30,14 @@ Setup
 3. update OPTION_EXPIRY and SENSIBUL_FUTURE_EXPIRY in jsonkeeper config file, check refresh_vwap_file_config()
 4. you can control trading start/stop from jsonkeeper
 5. Run flat_vwap_api
+
+vps
+1. crontab -e
+2. Add these two lines at bottom to start script 9:45 am - 3:15 pm
+```
+45 9 * * 1-5 cd /root/flattrade && nohup python3 flat_vwap_api.py > flat_vwap.log 2>&1 &
+15 15 * * 1-5 pkill -f flat_vwap_api.py
+```
+
+Check logs in this sheet
+https://docs.google.com/spreadsheets/d/1RJNMC_t8uNGUAfN2KIyA1K88EU0WrxJCX9RmmiJLHqM/
