@@ -22,3 +22,11 @@ Imp files
 5. Only run flat_vwap_api file it will import algo_flattrade file 
 6. this is api based algo where you need to generate token
 7. Web based folder required session Jkey which can be used from web login cookie Jkey
+
+
+Setup 
+1. pip3 install pyotp --break-system-packages
+2. Replace password in gen_token file
+3. update OPTION_EXPIRY and SENSIBUL_FUTURE_EXPIRY in jsonkeeper config file, check refresh_vwap_file_config()
+4. you can control trading start/stop from jsonkeeper
+5. Run flat_vwap_api
