@@ -1,0 +1,12 @@
+1. fix get position and pnl if no active position 
+2. fix initializing api inside gen token method no need of refresh token
+3. call getting executed even first trade is true maybe because of active position
+4. time based logic to start at 10:00 am - 3:00 pm and before closing the script run close all positions
+
+5. [ATM Order Failed] NIFTY28OCT25P25150, Error: None remove this print unncessaey happening
+6. fix if no position
+7. trade log in sheet
+
+
+close_all_positions. str get issue done
+cancel_all_pending_mis_orders to fix 
