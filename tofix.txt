@@ -1,21 +1,2 @@
-1. fix get position and pnl if no active position 
-2. fix initializing api inside gen token method no need of refresh token
-3. call getting executed even first trade is true maybe because of active position
-4. time based logic to start at 10:00 am - 3:00 pm and before closing the script run close all positions
-
-5. [ATM Order Failed] NIFTY28OCT25P25150, Error: None remove this print unncessaey happening
-6. fix if no position
-7. trade log in sheet
-
-
-close_all_positions. str get issue done
-cancel_all_pending_mis_orders to fix 
-
-close positions before 3:15 to save auto square off
-end_time = datetime.time(15, 15)  # 3:15 PM
-
-    now = datetime.datetime.now().time()
-    if now >= end_time:
-        close_all_position()
-        print("Ending script as 3:15 PM reached")
-        break
+1. close all position at 3:15
+2. send trade log on tg

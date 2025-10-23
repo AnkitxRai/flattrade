@@ -15,7 +15,7 @@ api = FlattradeApi(USERID, JKEY)
 SENSIBUL_FUTURE_EXPIRY = None   # SENSIBUL_FUTURE_EXPIRY = "NIFTY25OCTFUT"
 OPTION_EXPIRY = None # "28OCT25"
 TRADING_ACTIVE = False  # Fetch from Json Keeper check refresh_vwap_file_config()
-FIRST_TRADE = False
+FIRST_TRADE = True
 ACTIVE_POSITION = None
 NTFY = "fin22error"
 
@@ -214,12 +214,6 @@ def send_to_sheet(time_str, ltp, change_pts, change_emoji, vwap_flag, coi_flag, 
         print("❌ Error sending data:", e)
 
 def before_execution():
-    # skip 1st trade as script start it will trigger any call or put at start
-    global FIRST_TRADE
-    if FIRST_TRADE:
-        FIRST_TRADE = False
-        return
-    
     try:
         pnl = api.calculate_realized_pnl()
         print(f"Realized PNL: {pnl}")
@@ -237,16 +231,31 @@ def before_execution():
     return True  # ready to trade
 
 def execute_call_trade():
-    global ACTIVE_POSITION
+    global ACTIVE_POSITION, FIRST_TRADE
+
+    # 🟡 Skip the first CALL trade only once
+    if FIRST_TRADE and ACTIVE_POSITION != 'CALL':
+        ACTIVE_POSITION = 'CALL'
+        FIRST_TRADE = False
+        print("⏸ Skipping first CALL trade (initial trigger).")
+        return
+
     if not before_execution():
         return
     api.place_atm_order(OPTION_EXPIRY, "C", 75)
     ACTIVE_POSITION = 'CALL'
     print("🟢 Entered CALL position")
-    # send_ntfy("📈 Executing CALL trade")
 
 def execute_put_trade():
-    global ACTIVE_POSITION
+    global ACTIVE_POSITION, FIRST_TRADE
+
+    # 🟡 Skip the first PUT trade only once
+    if FIRST_TRADE and ACTIVE_POSITION != 'PUT':
+        ACTIVE_POSITION = 'PUT'
+        FIRST_TRADE = False
+        print("⏸ Skipping first PUT trade (initial trigger).")
+        return
+
     if not before_execution():
         return
     api.place_atm_order(OPTION_EXPIRY, "P", 75)
