@@ -124,18 +124,19 @@ class FlattradeApi:
             prd = pos.get("prd", "")
 
             # ✅ Only close intraday positions
-            if prd != "I":
+            if prd != "M":
                 continue
 
             if netqty > 0:  # LONG → SELL
                 resp = self.place_order(
-                    exch="NFO",
+                    exch="MCX",
                     tsym=tsym,
                     qty=netqty,
                     prc=0,
-                    prd="I",
+                    prd="M",
                     trantype="S",
-                    prctyp="MKT"
+                    prctyp="MKT",
+                    ret="DAY"
                 )
                 if resp is None or resp.get("stat") != "Ok":
                     print(f"[Error] Failed to close LONG {tsym}: {resp}")
@@ -285,7 +286,7 @@ class FlattradeApi:
             tsym=option_strike,
             qty=qty,
             prc=0,
-            prd="I",
+            prd="M",
             trantype="B",
             prctyp="MKT",
             ret="DAY")
