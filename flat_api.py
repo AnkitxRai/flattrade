@@ -232,3 +232,67 @@ class FlattradeApi:
             print(f"❌ [ATM Order Failed] {option_strike}, Error: {placing_atm_order.get('emsg', 'Unknown error')}")
 
         return placing_atm_order
+
+
+################################## CRUDE #########################
+
+    def crude_get_atm_spot(self, strike_step: int = 100):
+        # todo : update future token here from jsonkeeper
+        spot = self.get_quote("MCX", "457886")
+        if spot.get("stat") != "Ok":
+            raise Exception("Failed to fetch CRUDEOIL spot:", spot)
+
+        ltp = float(spot["lp"])
+        atm_strike = round(ltp / strike_step) * strike_step
+        return ltp, atm_strike
+
+
+    # def crude_get_atm_spot(self, expiry, strike_step: int = 100):
+    #     # todo : update future expiry in url
+    #     url = "https://groww.in/v1/api/commodity_fo/v1/product/searchId/mcx_crudeoil19nov25fut?is_live_price_required=true"
+
+    #     try:
+    #         res = requests.get(url, timeout=10)
+    #         data = res.json()
+
+    #         ltp = float(data["livePriceDetails"]["ltp"])
+    #         atm_strike = round(ltp / strike_step) * strike_step
+    #         return ltp, atm_strike
+
+    #     except Exception as e:
+    #         print(f"❌ LTP fetch error: {e}")
+    #         return None
+
+    def crude_get_atm_option(self, expiry, isCallOrPut: str = "C"):
+        try:
+            ltp, atm = self.crude_get_atm_spot()
+        except Exception as e:
+            print("❌ crude_get_atm_option failed:", e)
+            return None
+        option_type = "C" if isCallOrPut.upper() == "C" else "P"
+        option_symbol = f"CRUDEOIL{expiry}{option_type}{atm}"
+        return option_symbol
+
+    def crude_place_atm_order(self, expiry, callOrPut: str = "C", qty=100, offset=2):
+        option_strike = self.crude_get_atm_option(expiry, callOrPut)  # should return e.g., "CRUDEOIL28OCT25C55200"
+        print(option_strike)
+        if not option_strike:
+            print("Failed to get ATM option symbol")
+            return
+        
+        placing_atm_order = self.place_order(
+            exch="MCX",
+            tsym=option_strike,
+            qty=qty,
+            prc=0,
+            prd="I",
+            trantype="B",
+            prctyp="MKT",
+            ret="DAY")
+        
+        if placing_atm_order and placing_atm_order.get("stat") == "Ok":
+            print(f"✅ [ATM Order Placed] {option_strike}, Order No: {placing_atm_order.get('norenordno', 'N/A')}")
+        else:
+            print(f"❌ [ATM Order Failed] {option_strike}, Error: {placing_atm_order.get('emsg', 'Unknown error')}")
+
+        return placing_atm_order

@@ -1,2 +1,14 @@
 1. close all position at 3:15
 2. send trade log on tg
+3. fix quantity in nifty after sebi change
+
+
+crude
+gen token uncomment
+first trade fix
+
+in fetch_vwap_5paisa : fix future token i.e 457886 for nov, make it dynamic from jsonkeeper and get token from 5 paisa
+in crude_get_atm_spot : fix url future expiry dynamic or find another way to get ltp of crude 
+
+solution 
+save token in json keeper and pass in place_atm_order 
