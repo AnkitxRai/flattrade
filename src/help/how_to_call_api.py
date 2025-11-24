@@ -23,3 +23,13 @@ print("pnl", api.calculate_realized_pnl())
 # from gen_token import GenerateFlattradeToken
 # token_api = GenerateFlattradeToken()
 # token = token_api.gen_token()
+
+# telegram
+
+# import sys
+# import os
+# sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))  # Add src/ to path
+
+# from telegram.bot import send_to_channel  # Now relative to src/
+
+# send_to_channel("Hello from test.py! 🧪abc")

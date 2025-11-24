@@ -8,3 +8,6 @@ token.json
 # Optional: ignore virtual environment folders
 venv/
 .env/
+
+**/.DS_Store
+.DS_Store?
