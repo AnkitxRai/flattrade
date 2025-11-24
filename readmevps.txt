@@ -2,8 +2,8 @@ Automatic Setup VPS
 
 
 clone vps_setup.sh
-chmod +x setup_flattrade.sh
-sudo ./setup_flattrade.sh
+chmod +x vps_setup.sh
+sudo ./vps_setup.sh
 
 
 
