@@ -10,7 +10,7 @@ SENSIBUL_FUTURE_EXPIRY = None   # SENSIBUL_FUTURE_EXPIRY = "NIFTY25OCTFUT"
 OPTION_EXPIRY = None # "28OCT25"
 QTY = None
 TRADING_ACTIVE = False  # Fetch from Json Keeper check refresh_vwap_file_config()
-FIRST_TRADE = False
+FIRST_TRADE = True
 ACTIVE_POSITION = None
 
 def refresh_vwap_file_config():
@@ -288,7 +288,7 @@ def monitor_loop():
     print("No entry / No action")
 
 if __name__ == "__main__":
-    # generate_token()
+    generate_token()
 
     execute_call_trade()
 
