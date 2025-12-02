@@ -18,6 +18,8 @@ TRADING_ACTIVE = False  # Fetch from Json Keeper check refresh_vwap_file_config(
 FIRST_TRADE = True
 ACTIVE_POSITION = None
 NTFY = "fin22error"
+PREV_ADX = 0
+LAT_ADX = 0
 
 
 def generate_token():
@@ -135,7 +137,66 @@ def fetch_vwap():
     except Exception as e:
         print(f"❌ VWAP fetch error: {e}")
         return None, None, None, None, None
-    
+
+def get_adx():
+    if not SENSIBUL_FUTURE_EXPIRY:
+        print("❗ SENSIBUL_FUTURE_EXPIRY not configured.")
+        return None, None, None, None, None
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    url = f"https://oxide.sensibull.com/v1/compute/candles/{SENSIBUL_FUTURE_EXPIRY}"
+    payload = {
+        "from_date": today,
+        "to_date": today,
+        "interval": "1M",
+        "skip_last_ts": True
+    }
+    data = requests.post(url, json=payload).json()
+    c = data["payload"]["candles"]
+
+    # extract lists
+    high  = [x["high"] for x in c]
+    low   = [x["low"] for x in c]
+    close = [x["close"] for x in c]
+
+    # True Range / DM
+    tr = []
+    plus_dm = []
+    minus_dm = []
+    for i in range(1, len(c)):
+        tr.append(max(high[i]-low[i],
+                      abs(high[i]-close[i-1]),
+                      abs(low[i]-close[i-1])))
+
+        up  = high[i]-high[i-1]
+        dn  = low[i-1]-low[i]
+        plus_dm.append(up if up > dn and up > 0 else 0)
+        minus_dm.append(dn if dn > up and dn > 0 else 0)
+
+    # Wilder RMA
+    def rma(x, p):
+        y = x[:p]
+        s = sum(y)/p
+        out=[s]
+        for v in x[p:]:
+            s = (s*(p-1)+v)/p
+            out.append(s)
+        return out
+
+    p = 14
+    tr_r = rma(tr, p)
+    p_r  = rma(plus_dm, p)
+    m_r  = rma(minus_dm, p)
+
+    pdi = [(a/b)*100 for a,b in zip(p_r, tr_r)]
+    mdi = [(a/b)*100 for a,b in zip(m_r, tr_r)]
+
+    dx = [abs(a-b)/(a+b)*100 if (a+b)!=0 else 0
+          for a,b in zip(pdi, mdi)]
+
+    adx = rma(dx, p)[-1]
+    return round(adx, 1)
+
 def fetch_nt_total():
     url = "https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol=nifty&exchange=nse&expiryDate=&atmBelow=0&atmAbove=10"
     headers = {
@@ -168,14 +229,14 @@ def get_day_change():
         print(f"❌ Change fetch error: {e}")
         return None
 
-def format_output(ts, ltp, vwap, coi_pcr, change_pts):
+def format_output(ts, ltp, vwap, coi_pcr, change_pts, LAT_ADX):
     time_str = datetime.fromisoformat(ts).strftime("%H:%M")
     vwap_flag = "🟢" if ltp > vwap else "🔴"
     coi_flag = "🟢" if coi_pcr > 0 else "🔴"
     coi_pcr_k = round(coi_pcr / 1000, 1)
     change_emoji = "🟢" if change_pts >= 0 else "🔴"
 
-    print(f"🕒 {time_str} | {ltp} | {change_pts} {change_emoji} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}")
+    print(f"🕒 {time_str} | {ltp} | {change_pts} {change_emoji} | Adx : {LAT_ADX} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}")
 
     send_to_sheet(
         time_str=time_str,
@@ -226,8 +287,8 @@ def before_execution():
         print("⚠️ Loss exceeds -3000, skipping trade execution.")
         return False
 
-    api.close_all_positions()
     api.cancel_all_pending_mis_orders()
+    api.close_all_positions()
     return True  # ready to trade
 
 def execute_call_trade():
@@ -242,7 +303,7 @@ def execute_call_trade():
 
     if not before_execution():
         return
-    api.place_atm_order(OPTION_EXPIRY, "C", 75)
+    api.place_atm_order(OPTION_EXPIRY, "C", 150)
     ACTIVE_POSITION = 'CALL'
     print("🟢 Entered CALL position")
 
@@ -258,46 +319,49 @@ def execute_put_trade():
 
     if not before_execution():
         return
-    api.place_atm_order(OPTION_EXPIRY, "P", 75)
+    api.place_atm_order(OPTION_EXPIRY, "P", 150)
     ACTIVE_POSITION = 'PUT'
     print("🔴 Entered PUT position")
 
-def close_all_position():
+def close_trade():
     global ACTIVE_POSITION
+    api.cancel_all_pending_mis_orders()
     api.close_all_positions()
     ACTIVE_POSITION = None
     print("❌ Closing all position")
 
 def monitor_loop():
+    global ACTIVE_POSITION, PREV_ADX, LAT_ADX
+
     ts, ltp, vwap, ema9, ema21 = fetch_vwap()
     coi_pcr = fetch_nt_total()
     change_pts = get_day_change()
+
+    PREV_ADX = LAT_ADX
+    LAT_ADX = get_adx()
 
     if ts is None or ltp is None or vwap is None or ema9 is None or ema21 is None or coi_pcr is None or change_pts is None:
         print(f"{datetime.now().strftime('%H:%M')} | Data fetch error, skipping…")
         return  # Skip without sleeping here; sleep is in main loop
 
-    format_output(ts, ltp, vwap, coi_pcr, change_pts)
-    # print(f"[{datetime.now().strftime('%H:%M:%S')}] LTP: {ltp}, VWAP: {vwap}, EMA9: {ema9}, EMA21: {ema21}, PCR: {coi_pcr}, Change: {change_pts}")
-    
-    global ACTIVE_POSITION
+    format_output(ts, ltp, vwap, coi_pcr, change_pts, LAT_ADX)
     
     # Long (Call) Logic
     if ACTIVE_POSITION == 'CALL':
         if ltp < vwap or ema9 < ema21:
-            close_all_position()
+            close_trade()
 
     elif ACTIVE_POSITION is None:
-        if ltp > vwap and ema9 > ema21:
+        if ltp > vwap and ema9 > ema21  and (LAT_ADX - PREV_ADX > 1):
             execute_call_trade()
 
     # Short (Put) Logic
     if ACTIVE_POSITION == 'PUT':
         if ltp > vwap or ema9 > ema21:
-            close_all_position()
+            close_trade()
 
     elif ACTIVE_POSITION is None:
-        if ltp < vwap and ema9 < ema21:
+        if ltp < vwap and ema9 < ema21 and (LAT_ADX - PREV_ADX > 1):
             execute_put_trade()
 
 if __name__ == "__main__":
