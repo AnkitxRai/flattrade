@@ -187,8 +187,8 @@ def before_execution():
         return False
 
     try:
-        api.close_all_positions()
         api.cancel_all_pending_mis_orders()
+        api.close_all_positions()
     except Exception as e:
         print(f"Error closing/cancelling orders: {e}")
         return False
