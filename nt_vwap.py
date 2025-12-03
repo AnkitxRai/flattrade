@@ -231,6 +231,8 @@ def execute_put_trade():
 
 def close_all_position():
     global ACTIVE_POSITION
+    
+    api.cancel_all_pending_mis_orders()
     api.close_all_positions()
     ACTIVE_POSITION = None
     print("❌ Closing all position")
@@ -289,8 +291,6 @@ def monitor_loop():
 
 if __name__ == "__main__":
     generate_token()
-
-    execute_call_trade()
 
     while True:
         try:
