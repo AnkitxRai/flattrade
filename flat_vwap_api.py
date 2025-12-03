@@ -14,10 +14,10 @@ api = FlattradeApi(USERID, JKEY)
 
 SENSIBUL_FUTURE_EXPIRY = None   # SENSIBUL_FUTURE_EXPIRY = "NIFTY25OCTFUT"
 OPTION_EXPIRY = None # "28OCT25"
+QTY = None
 TRADING_ACTIVE = False  # Fetch from Json Keeper check refresh_vwap_file_config()
 FIRST_TRADE = True
 ACTIVE_POSITION = None
-NTFY = "fin22error"
 PREV_ADX = 0
 LAT_ADX = 0
 
@@ -58,7 +58,7 @@ def refresh_token():
         return False
 
 def refresh_vwap_file_config():
-    global SENSIBUL_FUTURE_EXPIRY, OPTION_EXPIRY, TRADING_ACTIVE
+    global SENSIBUL_FUTURE_EXPIRY, OPTION_EXPIRY, QTY, TRADING_ACTIVE
     json_url = "https://www.jsonkeeper.com/b/EDZIR"
 
     try:
@@ -73,8 +73,9 @@ def refresh_vwap_file_config():
 
     SENSIBUL_FUTURE_EXPIRY = data.get("SENSIBUL_FUTURE_EXPIRY")
     OPTION_EXPIRY = data.get("OPTION_EXPIRY")
+    QTY = data.get("QTY")
     TRADING_ACTIVE = data.get("TRADING_ACTIVE", False)
-    return SENSIBUL_FUTURE_EXPIRY, OPTION_EXPIRY, TRADING_ACTIVE
+    return SENSIBUL_FUTURE_EXPIRY, OPTION_EXPIRY, QTY, TRADING_ACTIVE
 
 def calculate_ema(prices, span):
     """
@@ -198,7 +199,7 @@ def get_adx():
     return round(adx, 1)
 
 def fetch_nt_total():
-    url = "https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol=nifty&exchange=nse&expiryDate=&atmBelow=0&atmAbove=10"
+    url = "https://webapi.niftytrader.in/webapi/option/option-chain-data?symbol=nifty&exchange=nse&expiryDate=&atmBelow=2&atmAbove=2"
     headers = {
         "User-Agent": "Mozilla/5.0",
         "accept": "application/json"
@@ -229,6 +230,20 @@ def get_day_change():
         print(f"❌ Change fetch error: {e}")
         return None
 
+def send_telegram_message(msg, imp=True):
+    BOT_TOKEN = "8331147432:AAGSG4mI8d87sWEBsY0qtarAtwWbpa4viq0" # zapy
+    CHANNEL_ID = "-1003494200670"   # your flatxx channel ID
+    CHANNEL_ID_IMP = "-1003448158591"   # your flatxx imp channel ID
+
+    chat_id = CHANNEL_ID_IMP if imp else CHANNEL_ID
+
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    data = {"chat_id": chat_id, "text": msg}
+    try:
+        requests.post(url, data=data, timeout=5)
+    except Exception as e:
+        print("❌ send_telegram_message error:", e)
+
 def format_output(ts, ltp, vwap, coi_pcr, change_pts, LAT_ADX):
     time_str = datetime.fromisoformat(ts).strftime("%H:%M")
     vwap_flag = "🟢" if ltp > vwap else "🔴"
@@ -236,6 +251,7 @@ def format_output(ts, ltp, vwap, coi_pcr, change_pts, LAT_ADX):
     coi_pcr_k = round(coi_pcr / 1000, 1)
     change_emoji = "🟢" if change_pts >= 0 else "🔴"
 
+    send_telegram_message(f"🕒 {time_str} | {ltp} | {change_pts} {change_emoji} | Adx : {LAT_ADX} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}", False)
     print(f"🕒 {time_str} | {ltp} | {change_pts} {change_emoji} | Adx : {LAT_ADX} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}")
 
     send_to_sheet(
@@ -283,8 +299,8 @@ def before_execution():
         return
 
     # ✅ Skip trade if loss exceeds threshold
-    if pnl < -3000:
-        print("⚠️ Loss exceeds -3000, skipping trade execution.")
+    if pnl < -4000:
+        print("⚠️ Loss exceeds -4000, skipping trade execution.")
         return False
 
     api.cancel_all_pending_mis_orders()
@@ -292,7 +308,7 @@ def before_execution():
     return True  # ready to trade
 
 def execute_call_trade():
-    global ACTIVE_POSITION, FIRST_TRADE
+    global ACTIVE_POSITION, FIRST_TRADE, QTY
 
     # 🟡 Skip the first CALL trade only once
     if FIRST_TRADE and ACTIVE_POSITION != 'CALL':
@@ -303,12 +319,13 @@ def execute_call_trade():
 
     if not before_execution():
         return
-    api.place_atm_order(OPTION_EXPIRY, "C", 150)
+    api.place_atm_order(OPTION_EXPIRY, "C", QTY)
     ACTIVE_POSITION = 'CALL'
-    print("🟢 Entered CALL position")
+    send_telegram_message("🟢 Entered Call position")
+    print("🟢 Entered Call position")
 
 def execute_put_trade():
-    global ACTIVE_POSITION, FIRST_TRADE
+    global ACTIVE_POSITION, FIRST_TRADE, QTY
 
     # 🟡 Skip the first PUT trade only once
     if FIRST_TRADE and ACTIVE_POSITION != 'PUT':
@@ -319,15 +336,17 @@ def execute_put_trade():
 
     if not before_execution():
         return
-    api.place_atm_order(OPTION_EXPIRY, "P", 150)
+    api.place_atm_order(OPTION_EXPIRY, "P", QTY)
     ACTIVE_POSITION = 'PUT'
-    print("🔴 Entered PUT position")
+    send_telegram_message("🔴 Entered Put position")
+    print("🔴 Entered Put position")
 
 def close_trade():
     global ACTIVE_POSITION
     api.cancel_all_pending_mis_orders()
     api.close_all_positions()
     ACTIVE_POSITION = None
+    send_telegram_message("❌ Closing all position")
     print("❌ Closing all position")
 
 def monitor_loop():
@@ -371,16 +390,10 @@ if __name__ == "__main__":
         print("Token unavailable. Exiting.")
         exit(1)
 
-    pnl = api.calculate_realized_pnl()
-    print("PNL:", pnl)
-
-    refresh_vwap_file_config()
     if not SENSIBUL_FUTURE_EXPIRY:
         print("No SENSIBUL_FUTURE_EXPIRY configured. Exiting.")
         exit(1)
-
-    print(f"Starting monitor with SENSIBUL_FUTURE_EXPIRY={SENSIBUL_FUTURE_EXPIRY}, TRADING_ACTIVE={TRADING_ACTIVE}")
-    
+   
     while True:
         try:
             refresh_vwap_file_config()  # Refresh config every minute for runtime updates
