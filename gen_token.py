@@ -13,6 +13,13 @@ TOTP_KEY = "35LY6332V5YJ36F5RATW36GJ7J446L43"
 USERID = "FZ19246"
 PASSWORD = "##"
 
+# second
+# APIKEY = "05c93cdd277f42ab96a4ecc2b94d7c41"
+# SECRETKEY = "2025.07a50dc4fbb2487ba4058dba12bd4583f28430252d9571b7"
+# TOTP_KEY = "V3B3T3AZ3U6236HO35BQRL6S4KP725O5"
+# USERID = "FZ31096"
+# PASSWORD = "##"
+
 class GenerateFlattradeToken:
     def __init__(self):
         print('🔐 Generating Flattrade Token...')
