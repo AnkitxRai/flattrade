@@ -7,16 +7,16 @@
     "USERID": "FZ19246",
     "PASSWORD": "xxxxx",
     "TOKEN": "fa2d6f540681fbe11e72a4deb70c800027dc58519350705d02c596bb9d1647a8",
-    "STATUS": true
+    "STATUS": false
   },
   {
     "ID": 2,
-    "APIKEY": "ccf9bbaf3d1041aea02d475399eafe1c",
-    "SECRETKEY": "2025.ff507a473d4949489270602bc1bdfc67b554dabea3450084",
-    "TOTP_KEY": "35LY6332V5YJ36F5RATW36GJ7J446L43",
-    "USERID": "FZ19246",
+    "APIKEY": "05c93cdd277f42ab96a4ecc2b94d7c41",
+    "SECRETKEY": "2025.07a50dc4fbb2487ba4058dba12bd4583f28430252d9571b7",
+    "TOTP_KEY": "V3B3T3AZ3U6236HO35BQRL6S4KP725O5",
+    "USERID": "Z31096",
     "PASSWORD": "xxxxx",
     "TOKEN": "e998a684f653b6556f2dbba184605aee06d2a59effc85b492107cd6c26e1d9ff",
-    "STATUS": false
+    "STATUS": true
   }
 ]
