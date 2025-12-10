@@ -16,6 +16,7 @@ class FlattradeApi:
             "placeorder": "/PlaceOrder",
             "modifyorder": "/ModifyOrder",
             "cancelorder": "/CancelOrder",
+            "singleorder": "/SingleOrdHist",
             "test": "/Test"
         }
 
@@ -72,7 +73,18 @@ class FlattradeApi:
 
     def get_order_book(self):
         return self.call_api("orderbook")
-    
+
+    def get_single_order_detail(self, norenordno):
+        if not norenordno:
+            raise ValueError("norenordno is required.")
+
+        norenordno = str(norenordno)
+        data = {"norenordno": norenordno}
+
+        order_details = self.call_api("singleorder", data)
+        order_data = order_details[0]
+        return order_data
+
     def cancel_order(self, norenordno: str):
         data = {
             "norenordno": norenordno
@@ -202,7 +214,8 @@ class FlattradeApi:
                 return response
             
             # Success
-            print(f"[Order Placed] Order No: {response.get('norenordno', 'N/A')}")
+            order = self.get_single_order_detail(response.get("norenordno"))
+            print(f"[Order Placed] Order No: {response.get('norenordno')} Avg Price: {order.get('avgprc')} Qty: {order.get('qty')}")
             return response
 
         except Exception as e:
