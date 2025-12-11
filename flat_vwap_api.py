@@ -7,6 +7,7 @@ from gen_token import GenerateFlattradeToken
 
 # put your credentials here
 USERID = "FZ19246"
+#USERID = "FZ31096"
 JKEY = None
 
 token_api = GenerateFlattradeToken()
@@ -251,7 +252,7 @@ def format_output(ts, ltp, vwap, coi_pcr, change_pts, LAT_ADX):
     coi_pcr_k = round(coi_pcr / 1000, 1)
     change_emoji = "🟢" if change_pts >= 0 else "🔴"
 
-    send_telegram_message(f"🕒 {time_str} | {change_pts} {change_emoji} | Adx: {LAT_ADX} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}", False)
+    send_telegram_message(f"🕒{time_str} | {change_pts} {change_emoji} | Adx:{LAT_ADX} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}", False)
     print(f"🕒 {time_str} | {ltp} | {change_pts} {change_emoji} | Adx : {LAT_ADX} | {vwap}{vwap_flag} | {coi_pcr_k}K{coi_flag}")
 
     send_to_sheet(

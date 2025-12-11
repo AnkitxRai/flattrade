@@ -186,6 +186,20 @@ class FlattradeApi:
                 continue
         return total_pnl
 
+    def send_telegram_message(self, msg, imp=True):
+        BOT_TOKEN = "8331147432:AAGSG4mI8d87sWEBsY0qtarAtwWbpa4viq0" # zapy
+        CHANNEL_ID = "-1003494200670"   # your flatxx channel ID
+        CHANNEL_ID_IMP = "-1003448158591"   # your flatxx imp channel ID
+
+        chat_id = CHANNEL_ID_IMP if imp else CHANNEL_ID
+
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+        data = {"chat_id": chat_id, "text": msg}
+        try:
+            requests.post(url, data=data, timeout=5)
+        except Exception as e:
+            print("❌ send_telegram_message error:", e)
+
     def place_order(self, exch: str, tsym: str, qty: int, prc: float, prd: str, trantype: str, prctyp: str, ret: str = "DAY"):
         try:
             data = {
@@ -215,7 +229,9 @@ class FlattradeApi:
             
             # Success
             order = self.get_single_order_detail(response.get("norenordno"))
-            print(f"[Order Placed] Order No: {response.get('norenordno')} Avg Price: {order.get('avgprc')} Qty: {order.get('qty')}")
+            tran_ball = "🟢" if order.get("trantype") == "B" else "🔴"
+            self.send_telegram_message(f"[Order]:{tran_ball} {order.get('tsym')} Avg Price: {order.get('avgprc')} Qty: {order.get('qty')}")
+            print(f"[Order Placed]:{order.get('trantype')} {order.get('tsym')} Avg Price: {order.get('avgprc')} Qty: {order.get('qty')}")
             return response
 
         except Exception as e:
