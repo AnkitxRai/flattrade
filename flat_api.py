@@ -230,7 +230,10 @@ class FlattradeApi:
             # Success
             order = self.get_single_order_detail(response.get("norenordno"))
             tran_ball = "🟢" if order.get("trantype") == "B" else "🔴"
-            self.send_telegram_message(f"[Order]:{tran_ball} {order.get('tsym')} Avg Price: {order.get('avgprc')} Qty: {order.get('qty')}")
+
+            pnl = self.calculate_realized_pnl()
+            self.send_telegram_message(f"{tran_ball} | {order.get('tsym')} | {order.get('avgprc')} | {order.get('qty')} | {pnl}")
+            
             print(f"[Order Placed]:{order.get('trantype')} {order.get('tsym')} Avg Price: {order.get('avgprc')} Qty: {order.get('qty')}")
             return response
 
