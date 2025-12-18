@@ -187,6 +187,7 @@ class FlattradeApi:
         return total_pnl
 
     def send_telegram_message(self, msg, imp=True):
+        return # todo
         BOT_TOKEN = "8331147432:AAGSG4mI8d87sWEBsY0qtarAtwWbpa4viq0" # zapy
         CHANNEL_ID = "-1003494200670"   # your flatxx channel ID
         CHANNEL_ID_IMP = "-1003448158591"   # your flatxx imp channel ID

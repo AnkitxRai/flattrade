@@ -5,9 +5,8 @@ from datetime import datetime
 from flat_api import FlattradeApi
 from gen_token import GenerateFlattradeToken
 
-# put your credentials here
 USERID = "FZ19246"
-#USERID = "FZ31096"
+# USERID = "FZ31096" # todo
 JKEY = None
 
 token_api = GenerateFlattradeToken()
@@ -76,6 +75,7 @@ def refresh_vwap_file_config():
     OPTION_EXPIRY = data.get("OPTION_EXPIRY")
     QTY = data.get("QTY")
     TRADING_ACTIVE = data.get("TRADING_ACTIVE", False)
+    # TRADING_ACTIVE = data.get("TRADING_ACTIVE2", False) # todo
     return SENSIBUL_FUTURE_EXPIRY, OPTION_EXPIRY, QTY, TRADING_ACTIVE
 
 def calculate_ema(prices, span):
@@ -232,6 +232,7 @@ def get_day_change():
         return None
 
 def send_telegram_message(msg, imp=True):
+    return # todo
     BOT_TOKEN = "8331147432:AAGSG4mI8d87sWEBsY0qtarAtwWbpa4viq0" # zapy
     CHANNEL_ID = "-1003494200670"   # your flatxx channel ID
     CHANNEL_ID_IMP = "-1003448158591"   # your flatxx imp channel ID
@@ -266,6 +267,7 @@ def format_output(ts, ltp, vwap, coi_pcr, change_pts, LAT_ADX):
     )
 
 def send_to_sheet(time_str, ltp, change_pts, change_emoji, vwap_flag, coi_flag, coi_pcr_k):
+    return
     # 1️⃣ Print formatted log
     # print(f"🕒 {time_str} | {ltp} | {change_pts} {change_emoji} | VWAP {vwap_flag} | {coi_pcr_k}K {coi_flag}")
 
@@ -372,7 +374,7 @@ def monitor_loop():
             close_trade()
 
     elif ACTIVE_POSITION is None:
-        if ltp > vwap and ema9 > ema21  and (LAT_ADX - PREV_ADX > 1):
+        if ltp > vwap and ema9 > ema21  and (LAT_ADX - PREV_ADX > 0.5) and LAT_ADX > 20:
             execute_call_trade()
 
     # Short (Put) Logic
@@ -381,7 +383,7 @@ def monitor_loop():
             close_trade()
 
     elif ACTIVE_POSITION is None:
-        if ltp < vwap and ema9 < ema21 and (LAT_ADX - PREV_ADX > 1):
+        if ltp < vwap and ema9 < ema21 and (LAT_ADX - PREV_ADX > 0.5) and LAT_ADX > 20:
             execute_put_trade()
 
 if __name__ == "__main__":
